@@ -1,54 +1,57 @@
 precision mediump float;
 
-attribute vec2 vPosition;
+attribute vec3 vPosition;
 attribute vec3 vColor;
+attribute vec3 vNormal;
+attribute vec2 vTexCoord;
+
+varying vec3 fNormal;
 varying vec3 fColor;
-uniform vec3 vec;
-uniform float size;
-uniform vec3 theta;
+varying vec3 fPosition;
+varying vec2 fTexCoord;
+
+uniform float scaleX;
+uniform float triangleX;
+uniform float triangleY;
+uniform float triangleZ;
+uniform int flag;
+
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+uniform mat3 normalMatrix;//modelMatrix-nya vektor normal
 
 void main() {
-  fColor = vColor;
-  vec3 angle = radians(theta);
-  vec3 c = cos(angle);
-  vec3 s = sin(angle);
-  
-  mat4 rx = mat4(
-    1.0, 0.0, 0.0, 0.0,
-    0.0, c.x, s.x, 0.0,
-    0.0, -s.x, c.x, 0.0,
-    0.0, 0.0, 0.0, 1.0
-  );
+  vec3 pusat = vec3(triangleX, triangleY, triangleZ);
 
-  mat4 ry = mat4(
-    c.y, 0.0, -s.y, 0.0,
+  mat4 matrixSkalasi = mat4(
+    scaleX, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0,
-    s.y, 0.0, c.y, 0.0,
-    0.0, 0.0, 0.0, 1.0
-  );
-
-  mat4 rz = mat4(
-    c.z, s.z, 0.0, 0.0,
-    -s.z, c.z, 0.0, 0.0,
     0.0, 0.0, 1.0, 0.0,
     0.0, 0.0, 0.0, 1.0
   );
 
-
-  mat4 scaling = mat4(
-    size, 0.0, 0.0, 0.0,
-    0.0, size, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0
+  mat4 matrixTranslation = mat4(
+    0.7, 0.0, 0.0, 0.0,
+    0.0, 0.7, 0.0, 0.0,
+    0.0, 0.0, 0.7, 0.0,
+    pusat, 1.0
   );
 
-  mat4 trans = mat4(
-    1.0, 0.0, 0.0, vec.x,
-    0.0, 1.0, 0.0, vec.y,
-    0.0, 0.0, 1.0, vec.z,
-    0.0, 0.0, 0.0, 1.0
-  );
+  if(flag == 0){
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(vPosition, 1.0);
+    //transfer koordinat tekstur ke fragment shader
+    fTexCoord = vTexCoord;
 
-  gl_Position = vec4(vPosition, 0.0, 1.0) * scaling * rz * ry * rx;
-  gl_Position = gl_Position * trans;
+    //transfer vektor normal (yang telah ditransformasi) ke fragment shader
+    fNormal = normalize(normalMatrix * vNormal);
+
+    //transfer posisi verteks
+    fPosition = vPosition;
+  }
+  else if(flag == 1){
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * matrixTranslation * matrixSkalasi * vec4(vPosition, 1.0);
+    fColor = vColor;
+  }
+
 }
